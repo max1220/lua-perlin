@@ -11,7 +11,6 @@
 
 // Most code take from: https://gist.github.com/nowl/828013
 
-static int SEED = 0;
 
 static int hash[] = {
 	208,34,231,213,32,248,233,56,161,78,24,140,71,48,140,254,245,255,247,247,40,
@@ -28,34 +27,44 @@ static int hash[] = {
 	114,20,218,113,154,27,127,246,250,1,8,198,250,209,92,222,173,21,88,102,219
 };
 
-int noise2(int x, int y) {
-	int tmp = hash[(y + SEED) % 256];
+
+
+int noise2(int x, int y, int seed) {
+	int tmp = hash[(y + seed) % 256];
 	return hash[(tmp + x) % 256];
 }
+
+
 
 float lin_inter(float x, float y, float s) {
 	return x + s * (y-x);
 }
 
+
+
 float smooth_inter(float x, float y, float s) {
 	return lin_inter(x, y, s * s * (3-2*s));
 }
 
-float noise2d(float x, float y) {
+
+
+float noise2d(float x, float y, int seed) {
 	int x_int = x;
 	int y_int = y;
 	float x_frac = x - x_int;
 	float y_frac = y - y_int;
-	int s = noise2(x_int, y_int);
-	int t = noise2(x_int+1, y_int);
-	int u = noise2(x_int, y_int+1);
-	int v = noise2(x_int+1, y_int+1);
+	int s = noise2(x_int, y_int, seed);
+	int t = noise2(x_int+1, y_int, seed);
+	int u = noise2(x_int, y_int+1, seed);
+	int v = noise2(x_int+1, y_int+1, seed);
 	float low = smooth_inter(s, t, x_frac);
 	float high = smooth_inter(u, v, x_frac);
 	return smooth_inter(low, high, y_frac);
 }
 
-float perlin2d(float x, float y, float freq, int depth) {
+
+
+float perlin2d(float x, float y, float freq, int depth, int seed) {
 	float xa = x*freq;
 	float ya = y*freq;
 	float amp = 1.0;
@@ -65,7 +74,7 @@ float perlin2d(float x, float y, float freq, int depth) {
 	int i;
 	for(i=0; i<depth; i++) {
 		div += 256 * amp;
-		fin += noise2d(xa, ya) * amp;
+		fin += noise2d(xa, ya, seed) * amp;
 		amp /= 2;
 		xa *= 2;
 		ya *= 2;
@@ -76,30 +85,22 @@ float perlin2d(float x, float y, float freq, int depth) {
 
 
 
-
-
-
-
 static int l_noise2d(lua_State *l) {
 	float x = luaL_checknumber(l, 1);
 	float y = luaL_checknumber(l, 2);
 	float freq = luaL_checknumber(l, 3);
 	int depth = luaL_checkinteger(l, 4);
-	lua_pushnumber(l, perlin2d(x,y,freq,depth));
+	int seed = luaL_checkinteger(l, 5);
+
+	lua_pushnumber(l, perlin2d(x, y, freq, depth, seed));
+
 	return 1;
 }
 
-/*
-static int l_noise1d(lua_State *L) {	
-	return 0;
-}
-*/
 
 
-
-LUALIB_API int luaopen_input(lua_State *L) {
+LUALIB_API int luaopen_perlin(lua_State *L) {
 	lua_newtable(L);
-	//LUA_T_PUSH_S_CF("noise1d", l_noise1d)
 	LUA_T_PUSH_S_CF("noise2d", l_noise2d)
 	return 1;
 }
