@@ -30,6 +30,12 @@ parameters x and y are the position in the noise function,
 freq is the frequency of the noise function, and
 depth is the ammount of samples to generate.
 
+Also see test_pgm.lua. This file will generate a pgm file
+containing perlin noise. Call as
+
+    ./test_pgm [filename] [freq] [depth] [seed]
+
+
 
 ToDo
 ----
